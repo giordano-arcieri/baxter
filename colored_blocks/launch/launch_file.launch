@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="colored_blocks" type="filter_node" name="filter_point_cloud" output="screen" />
+    <node pkg="colored_blocks" type="block_det_node" name="block_detection" output="screen" />
+
+</launch>
