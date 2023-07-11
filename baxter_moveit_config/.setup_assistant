@@ -8,4 +8,4 @@ moveit_setup_assistant_config:
   CONFIG:
     author_name: Rethink Robotics Inc.
     author_email: rsdk.support@rethinkrobotics.com
-    generated_timestamp: 1689109413
+    generated_timestamp: 1689109571
