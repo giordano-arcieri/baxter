@@ -30,6 +30,7 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
 {
     // make necessary decleration
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pcl_cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+    ros::Rate loop_rate(1);
 
     //convert input ros pointcloud to pcl pointcloud
     pcl::fromROSMsg(*point_cloud, *pcl_cloud);
@@ -50,6 +51,7 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
         br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "camera_depth_frame", "point " + std::to_string(i)));
         i++;
     }
+    loop_rate.sleep();
 
 }
 
