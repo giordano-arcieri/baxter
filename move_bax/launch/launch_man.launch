@@ -1,0 +1,8 @@
+
+<launch>
+
+    <include file="/home/giordanoarcieri/catkin_ws/src/baxter/baxter_moveit_config/launch/move_group.launch" />    
+    <node pkg="move_bax" type="to_blocks_node" name="move_to_blocks" output="screen" />
+
+
+</launch>
