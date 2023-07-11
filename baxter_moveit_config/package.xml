@@ -5,8 +5,8 @@
   <description>
      An automatically generated package with all the configuration and launch files for using the baxter with the MoveIt! Motion Planning Framework
   </description>
-  <author email="rsdk.support@rethinkrobotics.com">Rethink Robotics Inc.</author>
-  <maintainer email="rsdk.support@rethinkrobotics.com">Rethink Robotics Inc.</maintainer>
+  <author email="arcierigiordano@gmail.com">Giordano Arcieri</author>
+  <maintainer email="arcierigiordano@gmail.com">Giordano Arcieri</maintainer>
 
   <license>BSD</license>
 
