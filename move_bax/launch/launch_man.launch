@@ -1,8 +1,9 @@
 
 <launch>
 
-    <include file="/home/giordanoarcieri/catkin_ws/src/baxter/baxter_moveit_config/launch/move_group.launch" />    
-    <!-- <node pkg="move_bax" type="scripts/to_blocks.py" name="move_to_blocks" output="screen" /> -->
+    <!-- <include file="/home/giordanoarcieri/catkin_ws/src/baxter/baxter_moveit_config/launch/move_group.launch" />    -->
+    <remap from="/joint_states" to="/robot/joint_states"/>
+    <node pkg="move_bax" type="hello_node" name="say_hello" output="screen" /> 
 
 
 </launch>
