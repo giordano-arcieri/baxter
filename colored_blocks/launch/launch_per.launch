@@ -1,7 +1,5 @@
 <launch>
 
-    <include file="/opt/ros/melodic/share/openni2_launch/launch/openni2.launch" />    
-    <node pkg="tf" type="static_transform_publisher" name="to_camera_link" args="0.15 0 0.54 0 1.055 0 base camera_link 100" />  <!-- SD , DU , LR-->
     <node pkg="colored_blocks" type="filter_node" name="filter_point_cloud" output="screen" />
     <node pkg="colored_blocks" type="block_det_node" name="block_detection" output="screen" />
 

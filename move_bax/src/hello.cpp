@@ -17,11 +17,11 @@ int main(int argc, char** argv)
     move_group.allowReplanning(true);
 
     // Set maximum velocity and acceleration
-    move_group.setMaxVelocityScalingFactor(0.5);   
+    move_group.setMaxVelocityScalingFactor(0.3);   
     move_group.setMaxAccelerationScalingFactor(0.2);   
 
     // Sleeping object 
-    ros::Duration aspe(0.2);
+    ros::Duration aspe(0.3);
 
     // Define target joints
     std::vector<double> right_nutural = {0, -0.55, 0, 0.75, 0, 1.26, 0};
@@ -70,7 +70,6 @@ int main(int argc, char** argv)
     }
     
     spinner.stop();
-    ros::shutdown();
 
     return 0;
 }
