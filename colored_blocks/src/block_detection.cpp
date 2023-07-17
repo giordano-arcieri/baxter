@@ -10,11 +10,14 @@
 #include <pcl/kdtree/kdtree.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-
+#include <colored_blocks/blocks.h>
+#include <colored_blocks/block.h>
 
 std::vector<pcl::PointXYZRGBA> cluster_and_centroids(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr& cloud);
 pcl::PointXYZRGBA transform_point(std::string frame, pcl::PointXYZRGBA point);
 void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud);
+const char color(pcl::PointXYZRGBA point);
+const char quadtrent(pcl::PointXYZRGBA point);
 
 ros::Publisher pub;
 
@@ -26,7 +29,7 @@ int main (int argc, char** argv)
 
     // Create a ROS subscriber for the input point cloud
     ros::Subscriber sub = nh.subscribe("/filtered_point_cloud", 1, call_back);
-    //pub = nh.advertise<std::vector<pcl::PointXYZRGBA>>("/filtered_point_cloud", 1);
+    pub = nh.advertise<colored_blocks::blocks>("/missplaced_blocks", 1);
     ros::spin();
 }
 
@@ -36,7 +39,8 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pcl_cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
     ros::Rate loop_rate(60);
     ros::Duration stall(10);
-    
+    std::vector<colored_blocks::block> missplaced_blocks; //this will be what get published so the robot knows what blocks it needs to fix
+
     stall.sleep();
     //convert input ros pointcloud to pcl pointcloud
     pcl::fromROSMsg(*point_cloud, *pcl_cloud);
@@ -45,33 +49,48 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
     //cluster and find centroids
     std::vector<pcl::PointXYZRGBA> potential_blocks;
     potential_blocks = cluster_and_centroids(pcl_cloud);
-
+    
 
     //filter out bad potential blocks
-    static tf::TransformBroadcaster br;
-    // Create a TransformListener
-    tf::TransformListener listener;
-    int i = 0;
+
+
     double temp;
-    for(auto& point : potential_blocks){
-        
+    colored_blocks::block temp_block;
+    for(auto& point : potential_blocks)
+    {
+        //adjust each point to make it with respect to base
         temp = point.x;
         point.x = point.z;
         point.z = -1*point.y;
         point.y = -1*temp;
-
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(point.x, point.y, point.z) );
-        tf::Quaternion q;
-        q.setRPY(0, 0, M_PI);
-        transform.setRotation(q);
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "camera_link", "point"  + std::to_string(i)));
-        i++;
-
         point = transform_point("base", point);
-        ROS_INFO("%.3f, %.3f, %.3f\n", point.x, point.y, point.z);
+
+        //only put good potential blocks and missplaced blocks in missplaced blocks
+        if(!(point.x > 1.2 || point.x < 0.165 || point.y > 0.455 || point.y < -0.462))
+        {
+            //only put the blocks in if it is a missplaced block
+            const char color_block = color(point);
+            const char quadtrent_block_is_in = quadtrent(point);
+            if(color_block != quadtrent_block_is_in){
+                temp_block.pose.x = point.x; temp_block.pose.y = point.y; temp_block.pose.z = point.z;
+                temp_block.color.r = point.r; temp_block.color.g = point.g; temp_block.color.b = point.b;
+                missplaced_blocks.push_back(temp_block);
+                ROS_INFO("Found block");
+            }else{
+                ROS_INFO("Found block in right place");
+            }
+        }
+        else
+        {
+            ROS_INFO("Found block out of range");
+        }
+        
     }
-    std::cout << "\n\n================\n\n";
+    std::cout << "==============" << std::endl;
+
+    colored_blocks::blocks message;
+    message.data = missplaced_blocks;
+    pub.publish(message);
     
     loop_rate.sleep();
 
@@ -134,3 +153,43 @@ pcl::PointXYZRGBA transform_point(std::string frame, pcl::PointXYZRGBA point)
     point.z = transformed_point.point.z;
     return point;
 }
+
+const char color(pcl::PointXYZRGBA point)
+{
+    char color;
+
+    // Filter the color based on your criteria here
+    // Only consider four colors: green, red, blue, and yellow
+    if (point.g > point.r && point.g > point.b)
+    {
+        // If the green channel is the highest, color is green
+        color = 'g';
+    }
+    else if (point.b > point.r && point.b > point.g)
+    {
+        // If the blue channel is the highest, color is blue
+        color = 'b';
+    }
+    else if (point.r > point.g && point.r > point.b)
+    {
+        // If the red channel is the highest, color is red or yellow
+        if(point.g > 210)
+        {
+            color = 'y';
+        }
+        else
+        {
+            color = 'r';
+        }
+        
+    }
+
+
+    return color;
+}
+
+const char quadtrent(pcl::PointXYZRGBA point)
+{
+    return 'g';
+}
+

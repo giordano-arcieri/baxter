@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   moveit_ros_planning_interface
+  colored_blocks
 )
 
 find_package(Eigen3 REQUIRED)
