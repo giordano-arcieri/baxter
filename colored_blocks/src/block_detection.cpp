@@ -17,7 +17,7 @@ std::vector<pcl::PointXYZRGBA> cluster_and_centroids(pcl::PointCloud<pcl::PointX
 pcl::PointXYZRGBA transform_point(std::string frame, pcl::PointXYZRGBA point);
 void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud);
 const char color(pcl::PointXYZRGBA point);
-const char quadtrent(pcl::PointXYZRGBA point);
+const char quadrent(pcl::PointXYZRGBA point);
 
 ros::Publisher pub;
 
@@ -31,6 +31,7 @@ int main (int argc, char** argv)
     ros::Subscriber sub = nh.subscribe("/filtered_point_cloud", 1, call_back);
     pub = nh.advertise<colored_blocks::blocks>("/missplaced_blocks", 1);
     ros::spin();
+    return 0;
 }
 
 void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
@@ -38,10 +39,10 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
     // make necessary decleration
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pcl_cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
     ros::Rate loop_rate(60);
-    ros::Duration stall(10);
+    ros::Duration stall(3);
     std::vector<colored_blocks::block> missplaced_blocks; //this will be what get published so the robot knows what blocks it needs to fix
 
-    stall.sleep();
+
     //convert input ros pointcloud to pcl pointcloud
     pcl::fromROSMsg(*point_cloud, *pcl_cloud);
 
@@ -64,16 +65,16 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
         point.z = -1*point.y;
         point.y = -1*temp;
         point = transform_point("base", point);
+        ROS_INFO("PB at (%3f, %3f, %3f) color:'%c' quadtrent:'%c'", point.x, point.y, point.z, color(point), quadrent(point));
 
         //only put good potential blocks and missplaced blocks in missplaced blocks
-        if(!(point.x > 1.2 || point.x < 0.165 || point.y > 0.455 || point.y < -0.462))
+        if(!(point.x > 1.2 || point.x < 0.165 || point.y > 0.455 || point.y < -0.462 || point.z > -0.15 || point.z < -0.2))
         {
             //only put the blocks in if it is a missplaced block
             const char color_block = color(point);
-            const char quadtrent_block_is_in = quadtrent(point);
+            const char quadtrent_block_is_in = quadrent(point);
             if(color_block != quadtrent_block_is_in){
-                temp_block.pose.x = point.x; temp_block.pose.y = point.y; temp_block.pose.z = point.z;
-                temp_block.color.r = point.r; temp_block.color.g = point.g; temp_block.color.b = point.b;
+                temp_block.pose.x = point.x; temp_block.pose.y = point.y - 0.05; temp_block.pose.z = point.z;
                 missplaced_blocks.push_back(temp_block);
                 ROS_INFO("Found block");
             }else{
@@ -90,8 +91,28 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
 
     colored_blocks::blocks message;
     message.data = missplaced_blocks;
+
+
+    // static tf::TransformBroadcaster br;
+    // tf::Transform transform;
+    // tf::Quaternion q;
+
+    // int i = 0;
+    // for(auto& block : message.data)
+    // {
+    //     transform.setOrigin(tf::Vector3(block.pose.x, block.pose.y, block.pose.z));
+    //     q.setRPY(0, 0, 0);
+    //     transform.setRotation(q);
+    //     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base", "point"  + std::to_string(i)));
+    //     i++;
+    // }
+    // std::cout << "===========" << std::endl;
+
+
+
     pub.publish(message);
     
+    stall.sleep();
     loop_rate.sleep();
 
 }
@@ -188,8 +209,17 @@ const char color(pcl::PointXYZRGBA point)
     return color;
 }
 
-const char quadtrent(pcl::PointXYZRGBA point)
+const char quadrent(pcl::PointXYZRGBA point)
 {
+    if(point.y < 0){
+        if(point.x > 0.63){
+            return 'r';
+        }
+        return 'b';
+    }
+    if(point.x > 0.63){
+        return 'y';
+    }
     return 'g';
 }
 

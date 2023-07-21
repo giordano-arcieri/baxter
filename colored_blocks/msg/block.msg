@@ -1,2 +1,2 @@
 geometry_msgs/Point pose
-std_msgs/ColorRGBA color
+std_msgs/Char color

@@ -145,6 +145,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
  add_executable(filter_node src/filter.cpp)
  add_executable(block_det_node src/block_detection.cpp)
+ add_executable(fake_block_det_node src/fake_block_det.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -164,6 +165,9 @@ include_directories(
  target_link_libraries(block_det_node
    ${catkin_LIBRARIES}
  )
+ target_link_libraries(fake_block_det_node
+    ${catkin_LIBRARIES}
+  )
 
 #############
 ## Install ##

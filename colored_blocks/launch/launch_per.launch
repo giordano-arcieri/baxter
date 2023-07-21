@@ -1,6 +1,6 @@
 <launch>
-
+    <node pkg="tf" type="static_transform_publisher" name="to_camera_link" args="0.27 0.03 0.73 0 1.25 0 base camera_link 100" />  
     <node pkg="colored_blocks" type="filter_node" name="filter_point_cloud" output="screen" />
-    <node pkg="colored_blocks" type="block_det_node" name="block_detection" output="screen" />
+    <node pkg="colored_blocks" type="fake_block_det_node" name="block_detection" output="screen" />
 
 </launch>
