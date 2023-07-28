@@ -1,29 +1,38 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <librealsense2/rs.hpp>
+
 
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr removeNoise(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr& cloud);
 void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud);
 
-ros::Publisher pub;
+ros::Publisher block_publisher;
+ros::Publisher table_publisher;
+ros::Publisher test_publisher;
+
 
 int main (int argc, char** argv)
 {
-    // Initialize ROS
+    //initialize ROS
     ros::init(argc, argv, "filter_point_cloud");
     ros::NodeHandle nh;
 
     // Create a ROS subscriber for the input point cloud
-    ros::Subscriber sub = nh.subscribe("/camera/depth_registered/points", 1, call_back);
+    ros::Subscriber sub = nh.subscribe("/camera/depth/color/points", 1, call_back);
 
     // Create a ROS publisher for the output point cloud
-    pub = nh.advertise<sensor_msgs::PointCloud2>("/filtered_point_cloud", 1);
+    block_publisher = nh.advertise<sensor_msgs::PointCloud2>("/block_point_cloud", 1);
+    table_publisher = nh.advertise<sensor_msgs::PointCloud2>("/table_point_cloud", 1);
+    test_publisher = nh.advertise<sensor_msgs::PointCloud2>("/test_point_cloud", 1);
+
 
     // Spin
     ros::spin();
@@ -32,6 +41,7 @@ int main (int argc, char** argv)
 void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
 {
     // make necessary decleration
+    
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pcl_cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
     sensor_msgs::PointCloud2 output_pc;
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGBA>);
@@ -39,15 +49,21 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
     //convert input ros pointcloud to pcl pointcloud
     pcl::fromROSMsg(*point_cloud, *pcl_cloud);
 
+
+    test_publisher.publish(pcl_cloud);
+
     //filter the z-axes removing very far points and very close points (So that we only see the table and blocks)
     pcl::PassThrough<pcl::PointXYZRGBA> pass;
     pass.setInputCloud(pcl_cloud);
     pass.setFilterFieldName("z");
-    pass.setFilterLimits(0.65, 1.2);
+    pass.setFilterLimits(0, 2);
     //pass.setNegative (true);
     pass.filter(*cloud_filtered);
+    pcl::toROSMsg(*cloud_filtered, output_pc);
+    //test_publisher.publish(output_pc);
+    return;
 
-    cloud_filtered = removeNoise(cloud_filtered);
+    //cloud_filtered = removeNoise(cloud_filtered);
 
     //remove table 
 
@@ -71,6 +87,7 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
     extract.setIndices(inliers);
     extract.setNegative(false);
     extract.filter(*largestSurface);
+    table_publisher.publish(*largestSurface);
 
     // Remove the largest surface from the input cloud
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
@@ -80,7 +97,7 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
 
     //convert back to ros pointcloud msg and publish it 
     pcl::toROSMsg(*filteredCloud, output_pc);
-    pub.publish(output_pc);
+    block_publisher.publish(output_pc);
 }
 
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr removeNoise(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr& cloud)

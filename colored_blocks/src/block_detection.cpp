@@ -75,6 +75,7 @@ void call_back(const sensor_msgs::PointCloud2ConstPtr& point_cloud)
             const char quadtrent_block_is_in = quadrent(point);
             if(color_block != quadtrent_block_is_in){
                 temp_block.pose.x = point.x; temp_block.pose.y = point.y - 0.05; temp_block.pose.z = point.z;
+                temp_block.color.data = color_block; 
                 missplaced_blocks.push_back(temp_block);
                 ROS_INFO("Found block");
             }else{
