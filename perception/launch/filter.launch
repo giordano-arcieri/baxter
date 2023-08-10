@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find openni_launch)/launch/openni.launch" />
+    <include file="$(find perception)/launch/camera_transform_tf.launch" />
+    <node pkg="perception" type="filter_pointcloud_node" name="filter_pointcloud" output="screen" />
+</launch>

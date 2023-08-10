@@ -1,6 +1,0 @@
-<launch>
-    <node pkg="tf" type="static_transform_publisher" name="to_camera_link" args="0.0 0.0 1 0 0.0 0 base camera_link 100" />  
-    <node pkg="colored_blocks" type="filter_node" name="filter_point_cloud" output="screen" />
-    <node pkg="colored_blocks" type="block_det_node" name="block_detection" output="screen" />
-
-</launch>

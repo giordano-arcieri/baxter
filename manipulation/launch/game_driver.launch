@@ -1,0 +1,4 @@
+<launch>
+    <remap from="/joint_states" to="/robot/joint_states"/>
+    <node pkg="manipulation" type="game_driver_node" name="game_driver" output="screen" />
+</launch>

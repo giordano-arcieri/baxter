@@ -1,7 +1,0 @@
-
-<launch>
-
-    <remap from="/joint_states" to="/robot/joint_states"/>
-    <node pkg="move_bax" type="to_blocks_node" name="go_to_blocks" output="screen" /> 
-
-</launch>

@@ -1,0 +1,4 @@
+<launch>
+    <remap from="joint_states" to="/robot/joint_states"/>
+    <include file="$(find baxter_moveit_config)/launch/move_group.launch" />
+</launch>

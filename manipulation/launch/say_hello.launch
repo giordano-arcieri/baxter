@@ -1,0 +1,4 @@
+<launch>
+    <remap from="/joint_states" to="/robot/joint_states"/>
+    <node pkg="manipulation" type="say_hello_node" name="say_hello" output="screen" />
+</launch>

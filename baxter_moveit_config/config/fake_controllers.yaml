@@ -44,8 +44,14 @@ controller_list:
     type: $(arg fake_execution_type)
     joints:
       []
-initial:  # Define initial robot poses.
+  - name: fake_head_controller
+    type: $(arg fake_execution_type)
+    joints:
+      - head_pan
+initial:  # Define initial robot poses per group
   - group: left_arm
     pose: left_neutral
   - group: right_arm
     pose: right_neutral
+  - group: head
+    pose: head_right
