@@ -1,0 +1,4 @@
+<launch>
+    <remap from="/joint_states" to="/robot/joint_states"/>
+    <node pkg="manipulation" type="gripper_commands_node" name="gripper_commands" output="screen" />
+</launch>

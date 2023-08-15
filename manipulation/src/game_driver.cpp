@@ -43,13 +43,13 @@ int main(int argc, char** argv)
     release = nh.serviceClient<std_srvs::Empty>("/release");
     calibrate = nh.serviceClient<std_srvs::Empty>("/calibrate");
 
-
     //Setup MoveIt
     moveit::planning_interface::MoveGroupInterface move_group("right_arm"); 
     moveit::planning_interface::PlanningSceneInterface scene;
     move_group.setPlanningTime(10.0);
     move_group.allowReplanning(true);
     pMove_group = &move_group;
+
 
     //make sure the robot is ready to start by moving him to neutural, 
     //calibrating its grippers, releasing its grippers if they are open, and setting constraints.
@@ -354,7 +354,7 @@ int move_to_neutral(void){
     {
         pMove_group->setMaxVelocityScalingFactor(0.3);   
         pMove_group->setMaxAccelerationScalingFactor(0.1); 
-        std::vector<double> right_neutral = {0, -0.55, 0, 0.75, 0, 1.26, 0};
+        std::vector<double> right_neutral = {0, -0.55, 0, 0.75, 0, 1.26, 0}; //joint positions for right arm
         pMove_group->setJointValueTarget(right_neutral);
         moveit::planning_interface::MoveGroupInterface::Plan my_plan;
         bool success = (pMove_group->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
@@ -385,22 +385,28 @@ int pick_up(void)
     ros::Duration stall(1);
     std_srvs::Empty msg;
     geometry_msgs::Pose target_pose;
+
+    //pick up block
     ROS_INFO("Picking up block ... ");
     pMove_group->setMaxVelocityScalingFactor(0.06);   
     pMove_group->setMaxAccelerationScalingFactor(0.02); 
     target_pose = pMove_group->getCurrentPose().pose;
-    target_pose.position.z -= 0.06;
+    target_pose.position.z -= 0.06; //lower the gripper by 6cm 
     if(move_to(target_pose)){
         ROS_ERROR("Movement failed!");
         return 1; 
     }
     stall.sleep();
+
+    //close the grippers. Grip block
     grip.call(msg);
     stall.sleep();
+
+    //raise the gripper 
     pMove_group->setMaxVelocityScalingFactor(0.3);   
     pMove_group->setMaxAccelerationScalingFactor(0.1); 
     target_pose = pMove_group->getCurrentPose().pose;
-    target_pose.position.z += 0.1;
+    target_pose.position.z += 0.1; //in meters
     if(move_to(target_pose)){
         ROS_ERROR("Movement failed!");
         return 1;

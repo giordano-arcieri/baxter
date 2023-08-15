@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   tf
+  baxter_core_msgs
   visualization_msgs
   geometry_msgs
 )
@@ -150,6 +151,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(say_hello_node src/say_hello.cpp)
 add_executable(game_driver_node src/game_driver.cpp)
+add_executable(gripper_commands_node src/gripper_commands.cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -166,6 +169,9 @@ target_link_libraries(say_hello_node
   ${catkin_LIBRARIES}
 )
 target_link_libraries(game_driver_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(gripper_commands_node
   ${catkin_LIBRARIES}
 )
 
