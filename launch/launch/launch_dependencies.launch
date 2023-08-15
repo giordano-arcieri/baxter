@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find openni_launch)/launch/openni.launch" />
+    <include file="$(find baxter_moveit_config)/launch/move_group_remap.launch" />
+</launch>

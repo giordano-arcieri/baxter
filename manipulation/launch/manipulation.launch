@@ -1,5 +1,5 @@
 <launch>
     <remap from="/joint_states" to="/robot/joint_states"/>
-    <include file="$(find baxter_moveit_config)/launch/move_group_remap.launch" />
+    <node pkg="manipulation" type="gripper_commands_node" name="gripper_commands" output="screen" />
     <node pkg="manipulation" type="game_driver_node" name="game_driver" output="screen" />
 </launch>
