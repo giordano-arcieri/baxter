@@ -276,8 +276,8 @@ double distance_from_gripper(perception::Block block)
         tfListener.waitForTransform("base", "right_gripper", ros::Time(0), ros::Duration(3.0));
         tfListener.lookupTransform("base", "right_gripper", ros::Time(0), transform);
         distance_gripper_from_block = sqrt(
-            (block.pose.position.x - transform.getOrigin().x())*(block.pose.position.x - transform.getOrigin().x()) + 
-            (block.pose.position.y - transform.getOrigin().y())*(block.pose.position.y - transform.getOrigin().y()));
+            (block.position.position.x - transform.getOrigin().x())*(block.position.position.x - transform.getOrigin().x()) + 
+            (block.position.position.y - transform.getOrigin().y())*(block.position.position.y - transform.getOrigin().y()));
 
     }
     catch (tf::TransformException &ex)
