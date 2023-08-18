@@ -33,8 +33,6 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "game_driver");
     ros::NodeHandle nh;
     
-    ros::Duration stall(2);
-
     ros::AsyncSpinner spinner(2);
     spinner.start();
 
@@ -46,7 +44,8 @@ int main(int argc, char** argv)
     //Setup MoveIt
     moveit::planning_interface::MoveGroupInterface move_group("right_arm"); 
     moveit::planning_interface::PlanningSceneInterface scene;
-    move_group.setPlanningTime(10.0);
+    move_group.setPlanningTime(5.0);
+    move_group.setNumPlanningAttempts(20);  
     move_group.allowReplanning(true);
     pMove_group = &move_group;
 
@@ -65,16 +64,33 @@ int main(int argc, char** argv)
     jc1.position = -0.2;
     jc1.tolerance_above = 1.6;
     jc1.tolerance_below = 1.3;
+    jc1.weight = 0.7;
 
     jc2.joint_name = "right_w0";
     jc2.position = -0.1;
     jc2.tolerance_above = 2;
     jc2.tolerance_below = 1.6;
+    jc2.weight = 0.8;
+
+     //set up a quatornian constraint
+    moveit_msgs::OrientationConstraint ocm;
+
+    ocm.link_name = "right_wrist";
+    ocm.header.frame_id = move_group.getPlanningFrame();
+    ocm.orientation.x = 0;
+    ocm.orientation.y = 1;
+    ocm.orientation.z = 0;
+    ocm.orientation.w = 0;
+    ocm.absolute_x_axis_tolerance = 0.1;
+    ocm.absolute_y_axis_tolerance = 0.1;
+    ocm.absolute_z_axis_tolerance = 0.1;
+    ocm.weight = 1.0;
 
     //Apply constraints
     moveit_msgs::Constraints constraints;
     constraints.joint_constraints.push_back(jc1);
     constraints.joint_constraints.push_back(jc2);
+    constraints.orientation_constraints.push_back(ocm);
     move_group.setPathConstraints(constraints);
 
     //Create a CollisionObject message for the table
@@ -87,13 +103,13 @@ int main(int argc, char** argv)
     cylinder_primitive.type = cylinder_primitive.CYLINDER;
     cylinder_primitive.dimensions.resize(2);
     cylinder_primitive.dimensions[0] = 0.8;  // height
-    cylinder_primitive.dimensions[1] = 0.48;  // radius
+    cylinder_primitive.dimensions[1] = 1.00;  // radius
 
     geometry_msgs::Pose table_pose;
     table_pose.orientation.w = 1.0;
-    table_pose.position.x = 0.65;
+    table_pose.position.x = 0.64;
     table_pose.position.y = 0;
-    table_pose.position.z = -0.6;
+    table_pose.position.z = -0.59;
 
     //Set the shape and pose of the table
     table.primitives.push_back(cylinder_primitive);
@@ -112,9 +128,6 @@ int main(int argc, char** argv)
 
 void call_back(const perception::BlockList& blocks)
 {
-
-    ros::Duration stall(2);
-    ros::Rate loop_rate(60);
     std_srvs::Empty msg;
     static tf::TransformBroadcaster br;
     tf::Transform transform;
@@ -122,12 +135,12 @@ void call_back(const perception::BlockList& blocks)
     perception::Block closest_block;
 
     //adjust speed of right arm
-    pMove_group->setMaxVelocityScalingFactor(0.3);   
+    pMove_group->setMaxVelocityScalingFactor(0.5);   
     pMove_group->setMaxAccelerationScalingFactor(0.1); 
     
     //move arm to nutural if no blocks detected
     //Since this measn the camera cannot see anything or that there are actually not blocks
-    //ROS_INFO("Got block locations. List is of size %ld", blocks.data.size());
+    ROS_INFO("Got block locations. List is of size %ld", blocks.data.size());
     if(blocks.data.size() == 0){
         move_to_neutral();
         return;
@@ -167,7 +180,7 @@ void call_back(const perception::BlockList& blocks)
     {
         //Only go to pick up the blocks that are in the wrong quadrant
         block_distance = distance_from_gripper(block);//figure out distance based on block
-        if(block_distance > 0.01 && block_distance < smallest_distance && block.color.data() != block.quadrant.data()){
+        if(block_distance > 0.01 && block_distance < smallest_distance && block.color != block.quadrant){
             closest_block = block;
             smallest_distance = block_distance;
         }
@@ -197,11 +210,11 @@ void call_back(const perception::BlockList& blocks)
 
 
     ROS_INFO("Found block of '%s' color in the '%s' quadrent", 
-        color, quadrant);
+        color.c_str(), quadrant.c_str());
     
     
     //Go to closest misplaced blocks
-    double block_height = -0.115;
+    double block_height = -0.14;
     target_pose = createPose(closest_block.position.x, closest_block.position.y, block_height);
 
     ROS_INFO("Moving to pick up pose ...");
@@ -218,7 +231,7 @@ void call_back(const perception::BlockList& blocks)
 
 
     //Figure out what quadrent I need to go at
-    ROS_INFO("Moving to release block in the '%s' quadrent ...", color);
+    ROS_INFO("Moving to release block in the '%s' quadrent ...", color.c_str());
     double x = 0.63, y = 0, height = -0.1;
     if(color == "yellow"){ //if color is yello move to yellow quadrant
         x = 0.75;
@@ -252,7 +265,6 @@ void call_back(const perception::BlockList& blocks)
 
 }
 
-
 double distance_from_gripper(perception::Block block)
 {
     tf::TransformListener tfListener;
@@ -264,8 +276,8 @@ double distance_from_gripper(perception::Block block)
         tfListener.waitForTransform("base", "right_gripper", ros::Time(0), ros::Duration(3.0));
         tfListener.lookupTransform("base", "right_gripper", ros::Time(0), transform);
         distance_gripper_from_block = sqrt(
-            (block.position.x - transform.getOrigin().x())*(block.position.x - transform.getOrigin().x()) + 
-            (block.position.y - transform.getOrigin().y())*(block.position.y - transform.getOrigin().y()));
+            (block.pose.position.x - transform.getOrigin().x())*(block.pose.position.x - transform.getOrigin().x()) + 
+            (block.pose.position.y - transform.getOrigin().y())*(block.pose.position.y - transform.getOrigin().y()));
 
     }
     catch (tf::TransformException &ex)
@@ -278,18 +290,22 @@ double distance_from_gripper(perception::Block block)
 
 int move_to(geometry_msgs::Pose target_pose)
 {
-    ros::Duration stall(1);
+    ros::Duration stall(0.25);
     if(pMove_group == NULL){
         ROS_ERROR("pMove_group is NULL");
         return 1;
     }
+    if(target_pose.position.x == 0){
+        ROS_ERROR("target pose is NULL!");
+        return 1; 
+    }
     try
     {
-        
+        std::cout << 
         //Plan and execute the motion
         pMove_group->setPoseTarget(target_pose);
-
         moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+
         bool success = (pMove_group->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
 
         if (success)
@@ -302,7 +318,6 @@ int move_to(geometry_msgs::Pose target_pose)
         {
             ROS_ERROR("Planning failed!");
             return 1;
-            
         }
     }
     catch (const std::exception& e)
@@ -345,16 +360,16 @@ geometry_msgs::Pose createPose(double x, double y, double z)
 
 int move_to_neutral(void){
 
-    ros::Duration stall(1);
+    ros::Duration stall(0.25);
     if(pMove_group == NULL){
         ROS_ERROR("pMove_group is NULL");
         return 1;
     }
     try
     {
-        pMove_group->setMaxVelocityScalingFactor(0.3);   
+        pMove_group->setMaxVelocityScalingFactor(0.5);   
         pMove_group->setMaxAccelerationScalingFactor(0.1); 
-        std::vector<double> right_neutral = {0, -0.55, 0, 0.75, 0, 1.26, 0}; //joint positions for right arm
+        std::vector<double> right_neutral = {0.3, -0.8, 0, 1.4, 0, 0.95, -0.55};
         pMove_group->setJointValueTarget(right_neutral);
         moveit::planning_interface::MoveGroupInterface::Plan my_plan;
         bool success = (pMove_group->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
@@ -382,35 +397,42 @@ int move_to_neutral(void){
 
 int pick_up(void)
 {
-    ros::Duration stall(1);
     std_srvs::Empty msg;
     geometry_msgs::Pose target_pose;
+
+    //unapply joint constraints
+    moveit_msgs::Constraints normal_constraints = pMove_group->getPathConstraints();
+    moveit_msgs::Constraints removed_joint_constraints;
+    removed_joint_constraints.orientation_constraints = normal_constraints.orientation_constraints;
+    pMove_group->setPathConstraints(removed_joint_constraints);
 
     //pick up block
     ROS_INFO("Picking up block ... ");
     pMove_group->setMaxVelocityScalingFactor(0.06);   
     pMove_group->setMaxAccelerationScalingFactor(0.02); 
     target_pose = pMove_group->getCurrentPose().pose;
-    target_pose.position.z -= 0.06; //lower the gripper by 6cm 
+    target_pose.position.z -= 0.03; //lower the gripper by 6cm 
     if(move_to(target_pose)){
         ROS_ERROR("Movement failed!");
+        pMove_group->setPathConstraints(normal_constraints);
         return 1; 
     }
     stall.sleep();
 
     //close the grippers. Grip block
     grip.call(msg);
-    stall.sleep();
 
     //raise the gripper 
-    pMove_group->setMaxVelocityScalingFactor(0.3);   
+    pMove_group->setMaxVelocityScalingFactor(0.5);   
     pMove_group->setMaxAccelerationScalingFactor(0.1); 
     target_pose = pMove_group->getCurrentPose().pose;
-    target_pose.position.z += 0.1; //in meters
+    target_pose.position.z += 0.06; //in meters
     if(move_to(target_pose)){
         ROS_ERROR("Movement failed!");
+        pMove_group->setPathConstraints(normal_constraints);
         return 1;
     }
-    stall.sleep();
+
+    pMove_group->setPathConstraints(normal_constraints);
     return 0;
 }
