@@ -301,7 +301,6 @@ int move_to(geometry_msgs::Pose target_pose)
     }
     try
     {
-        std::cout << 
         //Plan and execute the motion
         pMove_group->setPoseTarget(target_pose);
         moveit::planning_interface::MoveGroupInterface::Plan my_plan;
@@ -417,7 +416,6 @@ int pick_up(void)
         pMove_group->setPathConstraints(normal_constraints);
         return 1; 
     }
-    stall.sleep();
 
     //close the grippers. Grip block
     grip.call(msg);
