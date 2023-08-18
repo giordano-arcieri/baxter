@@ -7,11 +7,12 @@ are located in the wrong quadrant, and bring them to the right quadrant, basical
 The following is step by step instructions on how to set everything up:
 
 This can be all done on the baxter robot. Or on a seperate divice that has set it's ROS_MASTER_URI to baxter.
-Keep in mind some launch files can only be launch on baxter. Specifically enabling the arms and XXX
+Keep in mind some launch files can only be launch on baxter. Specifically enabling the arms and joint_trajectory_action_server
 
 For this project a primeSense point cloud camera was used along with the openni driver.
 
 Prerequesites: 
+    while in catkin_ws/src install the following:
     openni driver:
         sudo apt-get install ros-${ROS_DISTRO}-openni-camera
     baxter_common which holds all the neccessary descriptions for baxter
@@ -19,9 +20,9 @@ Prerequesites:
 
 To launch the game you will first need to launch:
     enable robot:
-        XXX
+        rosrun baxter_tools enable_robot.py -e
     launch joint:
-        XXX
+        rosrun baxter_interface joint_trajectory_action_server.py
     launch move_group:
         roslaunch baxter_moveit_config move_group_remap.launch
     launch openni:
