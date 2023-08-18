@@ -195,7 +195,7 @@ left_arm:
     - ABITstar
     - BITstar
 right_arm:
-  default_planner_config: RRTConnect
+  default_planner_config: PRMstar
   planner_configs:
     - AnytimePathShortening
     - SBL
